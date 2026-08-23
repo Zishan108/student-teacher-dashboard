@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fraunces", serif;
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  --color-ink: #0B1220;
+  --color-surface: #131B2E;
+  --color-surface-high: #1B2540;
+  --color-line: #26304C;
+  --color-gold: #E8A33D;
+  --color-gold-soft: #F2C877;
+  --color-mint: #3DDC97;
+  --color-amber: #F2C94C;
+  --color-rose: #F0616B;
+  --color-ink-text: #EDF1F7;
+  --color-muted: #8A93AC;
+}
+
+.light {
+  --color-ink: #F7F4EC;
+  --color-surface: #FFFFFF;
+  --color-surface-high: #F1EDE1;
+  --color-line: #E2DCC8;
+  --color-gold: #B8752E;
+  --color-gold-soft: #D68F3E;
+  --color-mint: #1D9A64;
+  --color-amber: #A9790A;
+  --color-rose: #C23B3B;
+  --color-ink-text: #1E2233;
+  --color-muted: #6B6459;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-ink-text);
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
