@@ -30,28 +30,27 @@ Joineazy replaces manual spreadsheet tracking for group assignments. Students cr
 
 ## Project Structure
 
-joineazy-task/
-├── backend/
-│ ├── src/
-│ │ ├── config/ # Sequelize DB connection
-│ │ ├── middleware/ # JWT auth + role authorization
-│ │ ├── models/ # Sequelize models + associations
-│ │ ├── routes/ # Express route handlers
-│ │ └── server.js
-│ ├── Dockerfile
-│ └── package.json
-├── frontend/
-│ ├── src/
-│ │ ├── api/ # Axios API client + endpoint wrappers
-│ │ ├── components/ # Shared UI (Layout, StatusStamp, etc.)
-│ │ ├── context/ # Auth + Theme context providers
-│ │ ├── pages/ # Route-level pages (student/, admin/)
-│ │ └── routes/ # React Router config
-│ ├── Dockerfile
-│ └── package.json
-├── docker-compose.yml
-└── README.md
-
+    joineazy-task/
+    ├── backend/
+    │   ├── src/
+    │   │   ├── config/         # Sequelize DB connection
+    │   │   ├── middleware/     # JWT auth + role authorization
+    │   │   ├── models/         # Sequelize models + associations
+    │   │   ├── routes/         # Express route handlers
+    │   │   └── server.js
+    │   ├── Dockerfile
+    │   └── package.json
+    ├── frontend/
+    │   ├── src/
+    │   │   ├── api/            # Axios API client + endpoint wrappers
+    │   │   ├── components/     # Shared UI (Layout, StatusStamp, etc.)
+    │   │   ├── context/        # Auth + Theme context providers
+    │   │   ├── pages/          # Route-level pages (student/, admin/)
+    │   │   └── routes/         # React Router config
+    │   ├── Dockerfile
+    │   └── package.json
+    ├── docker-compose.yml
+    └── README.md
 
 ---
 
@@ -61,11 +60,9 @@ joineazy-task/
 
 Requires Docker Desktop installed and running.
 
-```bash
-git clone https://github.com/Zishan108/student-teacher-dashboard.git
-cd joineazy-task
-docker compose up --build
-```
+    git clone <your-repo-url>
+    cd joineazy-task
+    docker compose up --build
 
 This starts three containers: PostgreSQL (`db`), the Express API (`backend`, port 5000), and the React frontend served statically (`frontend`, port 3000).
 
@@ -74,38 +71,33 @@ Once running, open **http://localhost:3000**.
 ### Option B — Run manually (without Docker)
 
 **Backend:**
-```bash
-cd backend
-npm install
-```
+
+    cd backend
+    npm install
 
 Create a `.env` file in `backend/`:
 
-PORT=5000
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=joineazy
-DB_USER=postgres
-DB_PASSWORD=postgres
-JWT_SECRET=your_long_random_secret
-
+    PORT=5000
+    DB_HOST=localhost
+    DB_PORT=5432
+    DB_NAME=joineazy
+    DB_USER=postgres
+    DB_PASSWORD=postgres
+    JWT_SECRET=your_long_random_secret
 
 Start a local Postgres instance (via Docker is easiest):
-```bash
-docker run --name joineazy-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=joineazy -p 5432:5432 -d postgres:16
-```
+
+    docker run --name joineazy-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=joineazy -p 5432:5432 -d postgres:16
 
 Run the backend:
-```bash
-npm run dev
-```
+
+    npm run dev
 
 **Frontend** (new terminal):
-```bash
-cd frontend
-npm install
-npm run dev
-```
+
+    cd frontend
+    npm install
+    npm run dev
 
 Open **http://localhost:5173**.
 
@@ -122,20 +114,19 @@ Open **http://localhost:5173**.
 
 **ER Diagram (textual):**
 
-┌─────────┐ ┌──────────────┐ ┌─────────┐
-│ users │──1:N──│ group_members│──N:1──│ groups │
-└─────────┘ └──────────────┘ └─────────┘
-│ │
-│ 1:N (createdBy) │ N:M
-▼ ▼
-┌─────────────┐ ┌───────────────────┐ ┌──────────────┐
-│ assignments │──<│ assignment_groups │>─│ groups │
-└─────────────┘ └───────────────────┘ └──────────────┘
-│ │
-└──────────────< submissions >───────────┘
-(assignmentId, groupId,
-status, confirmedBy)
-
+    ┌─────────┐       ┌──────────────┐       ┌─────────┐
+    │  users  │──1:N──│ group_members│──N:1──│ groups  │
+    └─────────┘       └──────────────┘       └─────────┘
+         │                                        │
+         │ 1:N (createdBy)                        │ N:M
+         ▼                                        ▼
+    ┌─────────────┐   ┌───────────────────┐  ┌──────────────┐
+    │ assignments │──<│ assignment_groups │>─│    groups    │
+    └─────────────┘   └───────────────────┘  └──────────────┘
+         │                                        │
+         └──────────────< submissions >───────────┘
+                      (assignmentId, groupId,
+                       status, confirmedBy)
 
 ---
 
@@ -151,12 +142,14 @@ status, confirmedBy)
 ## API Endpoints
 
 ### Auth
+
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/auth/register` | Register (student or admin) |
 | POST | `/auth/login` | Login, returns JWT |
 
 ### Groups
+
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/groups` | Create a group |
@@ -167,6 +160,7 @@ status, confirmedBy)
 | GET | `/groups/all` | Get all groups (admin only) |
 
 ### Assignments
+
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/assignments` | Create assignment (admin only) |
@@ -176,6 +170,7 @@ status, confirmedBy)
 | GET | `/assignments/:id` | Get one assignment |
 
 ### Submissions
+
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/submissions/:id/step1` | Step 1: "Yes, I have submitted" |
