@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { ClipboardList, FolderPlus } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { getAssignments } from '../../api/assignments';
 import { getMyGroups } from '../../api/groups';
 import { getGroupSubmissions, confirmStep1, confirmStep2 } from '../../api/submissions';
 import StatusStamp from '../../components/StatusStamp';
-import { motion } from 'framer-motion';
+import Skeleton from '../../components/Skeleton';
+import EmptyState from '../../components/EmptyState';
 
 function Assignments() {
   const [assignments, setAssignments] = useState([]);
   const [groups, setGroups] = useState([]);
   const [submissionsByGroup, setSubmissionsByGroup] = useState({});
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -27,7 +30,7 @@ function Assignments() {
       }
       setSubmissionsByGroup(subsMap);
     } catch {
-      setError('Failed to load assignments');
+      toast.error('Failed to load assignments');
     } finally {
       setLoading(false);
     }
@@ -45,29 +48,50 @@ function Assignments() {
   const handleStep1 = async (submissionId) => {
     try {
       await confirmStep1(submissionId);
+      toast.success('Step 1 confirmed — one more tap to finish');
       fetchData();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to confirm step 1');
+      toast.error(err.response?.data?.error || 'Failed to confirm step 1');
     }
   };
 
   const handleStep2 = async (submissionId) => {
     try {
       await confirmStep2(submissionId);
+      toast.success('Submission confirmed');
       fetchData();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to confirm submission');
+      toast.error(err.response?.data?.error || 'Failed to confirm submission');
     }
   };
 
-  if (loading) return <p className="text-muted text-sm">Loading assignments...</p>;
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <p className="font-mono text-[11px] text-muted uppercase tracking-widest mb-1">Registry</p>
+          <h1 className="font-display text-3xl text-ink-text">Assignments</h1>
+        </div>
+        <div className="space-y-3">
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   if (groups.length === 0) {
     return (
-      <div>
-        <p className="font-mono text-[11px] text-muted uppercase tracking-widest mb-1">Registry</p>
-        <h1 className="font-display text-3xl text-ink-text mb-4">Assignments</h1>
-        <p className="text-muted text-sm">Join or create a group first to see assignments.</p>
+      <div className="space-y-8">
+        <div>
+          <p className="font-mono text-[11px] text-muted uppercase tracking-widest mb-1">Registry</p>
+          <h1 className="font-display text-3xl text-ink-text">Assignments</h1>
+        </div>
+        <EmptyState
+          icon={FolderPlus}
+          title="Join a group first"
+          body="Assignments show up here once you're part of a group. Head to My Groups to create or join one."
+        />
       </div>
     );
   }
@@ -79,14 +103,8 @@ function Assignments() {
         <h1 className="font-display text-3xl text-ink-text">Assignments</h1>
       </div>
 
-      {error && (
-        <div className="bg-rose/10 border border-rose/30 text-rose text-sm rounded-lg p-3">
-          {error}
-        </div>
-      )}
-
       {assignments.length === 0 && (
-        <p className="text-muted text-sm">No assignments posted yet.</p>
+        <EmptyState icon={ClipboardList} title="Nothing posted yet" body="Your professor hasn't created any assignments." />
       )}
 
       {groups.map((group) => (
@@ -101,11 +119,11 @@ function Assignments() {
 
               return (
                 <motion.div
-                    key={assignment.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35 }}
-                    className="bg-surface border border-line rounded-xl p-5 transition-colors duration-300"
+                  key={assignment.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35 }}
+                  className="bg-surface border border-line rounded-xl p-5 transition-colors duration-300"
                 >
                   <div className="flex justify-between items-start gap-4 mb-3">
                     <div>
@@ -124,9 +142,9 @@ function Assignments() {
                     <StatusStamp status={submission.status} />
                   </div>
 
-                  <div className="flex items-center gap-3 pt-3 border-t border-line">
+                  <div className="flex items-center gap-3 pt-3 border-t border-line flex-wrap">
                     
-                    <a href={assignment.onedriveLink}
+                    <a  href={assignment.onedriveLink}
                       target="_blank"
                       rel="noreferrer"
                       className="text-gold text-sm hover:text-gold-soft hover:underline"

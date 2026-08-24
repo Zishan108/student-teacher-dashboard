@@ -5,3 +5,4 @@ export const addGroupMember = (groupId, email) => api.post(`/groups/${groupId}/m
 export const getGroup = (groupId) => api.get(`/groups/${groupId}`);
 export const getMyGroups = () => api.get('/groups');
 export const getAllGroups = () => api.get('/groups/all');
+export const removeGroupMember = (groupId, userId) => api.delete(`/groups/${groupId}/members/${userId}`);

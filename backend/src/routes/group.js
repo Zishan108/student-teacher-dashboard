@@ -104,4 +104,29 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
+// Remove a member from a group
+router.delete('/:id/members/:userId', authenticate, async (req, res) => {
+  try {
+    const { id: groupId, userId } = req.params;
+
+    const requesterMembership = await GroupMember.findOne({
+      where: { groupId, userId: req.user.id },
+    });
+    if (!requesterMembership) {
+      return res.status(403).json({ error: 'You are not a member of this group' });
+    }
+
+    const targetMembership = await GroupMember.findOne({ where: { groupId, userId } });
+    if (!targetMembership) {
+      return res.status(404).json({ error: 'Member not found in this group' });
+    }
+
+    await targetMembership.destroy();
+    res.json({ message: 'Member removed successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+
 module.exports = router;

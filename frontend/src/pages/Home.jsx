@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 import AmbientBackground from '../components/AmbientBackground';
 import Counter from '../components/Counter';
+import UserMenu from '../components/UserMenu';
 
 const container = {
   hidden: {},
@@ -66,12 +67,15 @@ function Home() {
           <div className="flex items-center gap-4">
             <ThemeToggle />
             {user ? (
-              <Link
-                to={user.role === 'admin' ? '/admin' : '/student'}
-                className="text-sm bg-gold hover:bg-gold-soft text-ink px-4 py-2 rounded-lg font-semibold transition"
-              >
-                Dashboard
-              </Link>
+              <>
+                <Link
+                  to={user.role === 'admin' ? '/admin' : '/student'}
+                  className="text-sm bg-gold hover:bg-gold-soft text-ink px-4 py-2 rounded-lg font-semibold transition"
+                >
+                  Dashboard
+                </Link>
+                <UserMenu />
+              </>
             ) : (
               <>
                 <Link to="/login" className="text-sm text-muted hover:text-ink-text transition">

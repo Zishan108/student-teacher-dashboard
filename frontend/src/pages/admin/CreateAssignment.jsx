@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createAssignment } from '../../api/assignments';
 import { getAllGroups } from '../../api/groups';
+import toast from 'react-hot-toast';
 
 function CreateAssignment({ onCreated }) {
   const [title, setTitle] = useState('');
@@ -25,39 +26,37 @@ function CreateAssignment({ onCreated }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
+  e.preventDefault();
 
-    if (target === 'group' && selectedGroupIds.length === 0) {
-      setError('Select at least one group, or switch to "All groups".');
-      return;
-    }
+  if (target === 'group' && selectedGroupIds.length === 0) {
+    toast.error('Select at least one group, or switch to "All groups".');
+    return;
+  }
 
-    setLoading(true);
-    try {
-      await createAssignment({
-        title,
-        description,
-        dueDate,
-        onedriveLink,
-        target,
-        groupIds: target === 'group' ? selectedGroupIds : undefined,
-      });
-      setSuccess('Assignment created successfully.');
-      setTitle('');
-      setDescription('');
-      setDueDate('');
-      setOnedriveLink('');
-      setTarget('all');
-      setSelectedGroupIds([]);
-      if (onCreated) onCreated();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create assignment');
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    await createAssignment({
+      title,
+      description,
+      dueDate,
+      onedriveLink,
+      target,
+      groupIds: target === 'group' ? selectedGroupIds : undefined,
+    });
+    toast.success('Assignment created');
+    setTitle('');
+    setDescription('');
+    setDueDate('');
+    setOnedriveLink('');
+    setTarget('all');
+    setSelectedGroupIds([]);
+    if (onCreated) onCreated();
+  } catch (err) {
+    toast.error(err.response?.data?.error || 'Failed to create assignment');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const inputClass =
     'w-full px-4 py-2.5 rounded-lg bg-surface-high text-ink-text border border-line focus:outline-none focus:border-gold transition';

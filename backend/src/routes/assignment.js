@@ -89,4 +89,21 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
+// Delete assignment (admin only)
+router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const assignment = await Assignment.findByPk(req.params.id);
+    if (!assignment) return res.status(404).json({ error: 'Assignment not found' });
+
+    await Submission.destroy({ where: { assignmentId: assignment.id } });
+    await AssignmentGroup.destroy({ where: { assignmentId: assignment.id } });
+    await assignment.destroy();
+
+    res.json({ message: 'Assignment deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+
 module.exports = router;

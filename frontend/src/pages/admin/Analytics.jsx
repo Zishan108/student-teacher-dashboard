@@ -1,21 +1,37 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart3 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { getAnalytics } from '../../api/submissions';
+import Skeleton from '../../components/Skeleton';
+import EmptyState from '../../components/EmptyState';
 
 function Analytics() {
   const [analytics, setAnalytics] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     getAnalytics()
       .then((res) => setAnalytics(res.data.analytics))
-      .catch(() => setError('Failed to load analytics'))
+      .catch(() => toast.error('Failed to load analytics'))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="text-muted text-sm">Loading analytics...</p>;
-  if (error) return <p className="text-rose text-sm">{error}</p>;
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <p className="font-mono text-[11px] text-muted uppercase tracking-widest mb-1">Overview</p>
+          <h1 className="font-display text-3xl text-ink-text">Analytics</h1>
+        </div>
+        <Skeleton className="h-72 w-full" />
+        <div className="space-y-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -25,10 +41,14 @@ function Analytics() {
       </div>
 
       {analytics.length === 0 ? (
-        <p className="text-muted text-sm">No assignments yet.</p>
+        <EmptyState
+          icon={BarChart3}
+          title="No data yet"
+          body="Analytics appear once assignments and groups exist."
+        />
       ) : (
         <>
-          <div className="bg-surface border border-line rounded-xl p-6">
+          <div className="bg-surface border border-line rounded-xl p-6 transition-colors duration-300">
             <p className="text-muted text-xs font-mono uppercase tracking-wider mb-4">
               Submission status by assignment
             </p>
@@ -60,7 +80,10 @@ function Analytics() {
 
           <div className="grid gap-3">
             {analytics.map((a) => (
-              <div key={a.assignmentId} className="bg-surface border border-line rounded-xl p-5">
+              <div
+                key={a.assignmentId}
+                className="bg-surface border border-line rounded-xl p-5 transition-colors duration-300"
+              >
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="text-ink-text font-medium">{a.title}</h4>
                   <span className="text-mint font-mono text-sm">{a.completionRate}%</span>
