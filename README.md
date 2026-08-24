@@ -62,7 +62,7 @@ joineazy-task/
 Requires Docker Desktop installed and running.
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Zishan108/student-teacher-dashboard.git
 cd joineazy-task
 docker compose up --build
 ```
