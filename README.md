@@ -60,7 +60,7 @@ Joineazy replaces manual spreadsheet tracking for group assignments. Students cr
 
 Requires Docker Desktop installed and running.
 
-    git clone <your-repo-url>
+    git clone https://github.com/Zishan108/student-teacher-dashboard.git 
     cd joineazy-task
     docker compose up --build
 
