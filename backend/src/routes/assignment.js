@@ -1,5 +1,5 @@
 const express = require('express');
-const { Assignment, AssignmentGroup, Group, Submission } = require('../models');
+const { Assignment, AssignmentGroup, Group, Submission, User, Course } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -7,11 +7,13 @@ const router = express.Router();
 // Create assignment (admin only)
 router.post('/', authenticate, authorize('admin'), async (req, res) => {
   try {
-    const { title, description, dueDate, onedriveLink, target, groupIds } = req.body;
+    const { title, description, dueDate, onedriveLink, target, groupIds, submissionType, courseId } = req.body;
 
     if (!title || !dueDate || !onedriveLink) {
       return res.status(400).json({ error: 'Title, dueDate, and onedriveLink are required' });
     }
+
+    const resolvedType = submissionType === 'individual' ? 'individual' : 'group';
 
     const assignment = await Assignment.create({
       title,
@@ -19,19 +21,35 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
       dueDate,
       onedriveLink,
       target: target === 'group' ? 'group' : 'all',
+      submissionType: resolvedType,
+      courseId: courseId || null,
       createdBy: req.user.id,
     });
 
-    // If targeting specific groups, link them + create pending submissions
     let targetGroups = [];
-    if (target === 'group' && Array.isArray(groupIds) && groupIds.length > 0) {
+
+    if (resolvedType === 'individual') {
+      // Individual submissions: one row per enrolled student in the course,
+      // or per every student if no course is set (fallback).
+      let students;
+      if (courseId) {
+        const course = await Course.findByPk(courseId, {
+          include: [{ model: User, as: 'students' }],
+        });
+        students = course ? course.students : [];
+      } else {
+        students = await User.findAll({ where: { role: 'student' } });
+      }
+      for (const s of students) {
+        await Submission.create({ assignmentId: assignment.id, studentId: s.id, status: 'pending' });
+      }
+    } else if (target === 'group' && Array.isArray(groupIds) && groupIds.length > 0) {
       for (const groupId of groupIds) {
         await AssignmentGroup.create({ assignmentId: assignment.id, groupId });
         await Submission.create({ assignmentId: assignment.id, groupId, status: 'pending' });
       }
       targetGroups = groupIds;
     } else {
-      // target = 'all' -> create a pending submission for every existing group
       const allGroups = await Group.findAll();
       for (const g of allGroups) {
         await Submission.create({ assignmentId: assignment.id, groupId: g.id, status: 'pending' });

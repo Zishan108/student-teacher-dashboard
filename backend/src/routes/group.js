@@ -7,12 +7,14 @@ const router = express.Router();
 // Create a group (student creates, becomes first member automatically)
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, courseId } = req.body;
     if (!name) return res.status(400).json({ error: 'Group name is required' });
 
     const group = await Group.create({
       name,
       createdBy: req.user.id,
+      leaderId: req.user.id, // creator is leader by default
+      courseId: courseId || null,
     });
 
     await GroupMember.create({
@@ -73,7 +75,10 @@ router.get('/all', authenticate, authorize('admin'), async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const group = await Group.findByPk(req.params.id, {
-      include: [{ model: User, as: 'members', attributes: ['id', 'name', 'email'] }],
+      include: [
+        { model: User, as: 'members', attributes: ['id', 'name', 'email'] },
+        { model: User, as: 'leader', attributes: ['id', 'name', 'email'] },
+      ],
     });
     if (!group) return res.status(404).json({ error: 'Group not found' });
 
@@ -88,12 +93,15 @@ router.get('/:id', authenticate, async (req, res) => {
 // Get all groups the logged-in user belongs to
 router.get('/', authenticate, async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id, {
+        const user = await User.findByPk(req.user.id, {
       include: [
         {
           model: Group,
           as: 'groups',
-          include: [{ model: User, as: 'members', attributes: ['id', 'name', 'email'] }],
+          include: [
+            { model: User, as: 'members', attributes: ['id', 'name', 'email'] },
+            { model: User, as: 'leader', attributes: ['id', 'name', 'email'] },
+          ],
         },
       ],
     });
@@ -123,6 +131,28 @@ router.delete('/:id/members/:userId', authenticate, async (req, res) => {
 
     await targetMembership.destroy();
     res.json({ message: 'Member removed successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+
+// Transfer group leadership to another member (current leader only)
+router.patch('/:id/leader', authenticate, async (req, res) => {
+  try {
+    const { newLeaderId } = req.body;
+    const group = await Group.findByPk(req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    if (group.leaderId !== req.user.id) {
+      return res.status(403).json({ error: 'Only the current leader can transfer leadership' });
+    }
+
+    const isMember = await GroupMember.findOne({ where: { groupId: group.id, userId: newLeaderId } });
+    if (!isMember) return res.status(400).json({ error: 'New leader must be a member of this group' });
+
+    await group.update({ leaderId: newLeaderId });
+    res.json({ message: 'Leadership transferred', group });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Something went wrong' });

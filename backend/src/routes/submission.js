@@ -5,18 +5,29 @@ const { authenticate, authorize } = require('../middleware/auth');
 const router = express.Router();
 
 // Step 1: "Yes, I have submitted" (student, must be a member of the group)
+// Step 1: "Yes, I have submitted"
 router.post('/:id/step1', authenticate, async (req, res) => {
   try {
-    const submission = await Submission.findByPk(req.params.id);
-    if (!submission) return res.status(404).json({ error: 'Submission not found' });
-
-    const isMember = await GroupMember.findOne({
-      where: { groupId: submission.groupId, userId: req.user.id },
+    const submission = await Submission.findByPk(req.params.id, {
+      include: [{ model: Group }],
     });
-    if (!isMember) return res.status(403).json({ error: 'You are not a member of this group' });
+    if (!submission) return res.status(404).json({ error: 'Submission not found' });
 
     if (submission.status === 'confirmed') {
       return res.status(400).json({ error: 'Already fully confirmed' });
+    }
+
+    if (submission.groupId) {
+      // Group submission — only the leader can act
+      const group = submission.Group;
+      if (group.leaderId !== req.user.id) {
+        return res.status(403).json({ error: 'Only the group leader can confirm this submission' });
+      }
+    } else {
+      // Individual submission — only the assigned student can act
+      if (submission.studentId !== req.user.id) {
+        return res.status(403).json({ error: 'This submission does not belong to you' });
+      }
     }
 
     await submission.update({ status: 'step1_confirmed' });
@@ -30,16 +41,24 @@ router.post('/:id/step1', authenticate, async (req, res) => {
 // Step 2: Final confirm
 router.post('/:id/confirm', authenticate, async (req, res) => {
   try {
-    const submission = await Submission.findByPk(req.params.id);
-    if (!submission) return res.status(404).json({ error: 'Submission not found' });
-
-    const isMember = await GroupMember.findOne({
-      where: { groupId: submission.groupId, userId: req.user.id },
+    const submission = await Submission.findByPk(req.params.id, {
+      include: [{ model: Group }],
     });
-    if (!isMember) return res.status(403).json({ error: 'You are not a member of this group' });
+    if (!submission) return res.status(404).json({ error: 'Submission not found' });
 
     if (submission.status !== 'step1_confirmed') {
       return res.status(400).json({ error: 'Please complete step 1 first' });
+    }
+
+    if (submission.groupId) {
+      const group = submission.Group;
+      if (group.leaderId !== req.user.id) {
+        return res.status(403).json({ error: 'Only the group leader can confirm this submission' });
+      }
+    } else {
+      if (submission.studentId !== req.user.id) {
+        return res.status(403).json({ error: 'This submission does not belong to you' });
+      }
     }
 
     await submission.update({
@@ -113,6 +132,20 @@ router.get('/analytics', authenticate, authorize('admin'), async (req, res) => {
     });
 
     res.json({ analytics });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+
+// Get all individual submissions for the logged-in student
+router.get('/mine', authenticate, async (req, res) => {
+  try {
+    const submissions = await Submission.findAll({
+      where: { studentId: req.user.id },
+      include: [{ model: Assignment }],
+    });
+    res.json({ submissions });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Something went wrong' });

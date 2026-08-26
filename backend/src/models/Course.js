@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
-const Group = sequelize.define('Group', {
+const Course = sequelize.define('Course', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -11,21 +11,17 @@ const Group = sequelize.define('Group', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  createdBy: {
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  professorId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-  },
-  leaderId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  courseId: {
-    type: DataTypes.INTEGER,
-    allowNull: true, // nullable so existing groups don't break; new groups should always set this
   },
 }, {
-  tableName: 'groups',
+  tableName: 'courses',
   timestamps: true,
 });
 
-module.exports = Group;
+module.exports = Course;

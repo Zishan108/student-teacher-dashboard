@@ -28,6 +28,15 @@ const Assignment = sequelize.define('Assignment', {
     allowNull: false,
     defaultValue: 'all',
   },
+  submissionType: {
+    type: DataTypes.ENUM('individual', 'group'),
+    allowNull: false,
+    defaultValue: 'group',
+  },
+  courseId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
   createdBy: {
     type: DataTypes.INTEGER,
     allowNull: false,

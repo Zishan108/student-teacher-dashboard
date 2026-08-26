@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import Layout from '../../components/Layout';
+import CourseGrid from './CourseGrid';
 import MyGroups from './MyGroups';
-import Assignments from './Assignments';
 
 const TABS = [
-  { id: 'assignments', label: 'Assignments' },
+  { id: 'courses', label: 'My Courses' },
   { id: 'groups', label: 'My Groups' },
 ];
 
 function StudentDashboard() {
-  const [tab, setTab] = useState('assignments');
+  const [tab, setTab] = useState('courses');
 
   return (
     <Layout tabs={TABS} activeTab={tab} onTabChange={setTab} roleLabel="Student">
-      {tab === 'assignments' ? <Assignments /> : <MyGroups />}
+      {tab === 'courses' ? <CourseGrid /> : <MyGroups />}
     </Layout>
   );
 }

@@ -5,3 +5,4 @@ export const getAssignmentSubmissions = (assignmentId) => api.get(`/submissions/
 export const confirmStep1 = (submissionId) => api.post(`/submissions/${submissionId}/step1`);
 export const confirmStep2 = (submissionId) => api.post(`/submissions/${submissionId}/confirm`);
 export const getAnalytics = () => api.get('/submissions/analytics');
+export const getMySubmissions = () => api.get('/submissions/mine');

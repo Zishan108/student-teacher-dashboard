@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const groupRoutes = require('./routes/group');
 const assignmentRoutes = require('./routes/assignment');
 const submissionRoutes = require('./routes/submission');
+const courseRoutes = require('./routes/courses');
 
 
 
@@ -19,6 +20,7 @@ app.use('/auth', authRoutes);
 app.use('/groups', groupRoutes);
 app.use('/assignments', assignmentRoutes);
 app.use('/submissions', submissionRoutes);
+app.use('/courses', courseRoutes);
 
 const PORT = process.env.PORT || 5000;
 

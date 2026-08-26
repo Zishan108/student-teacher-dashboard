@@ -3,6 +3,7 @@ import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import StudentDashboard from '../pages/student/StudentDashboard';
+import CourseDetail from '../pages/student/CourseDetail';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import ProtectedRoute from '../components/ProtectedRoute';
 
@@ -18,6 +19,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRole="student">
             <StudentDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/course/:id"
+        element={
+          <ProtectedRoute allowedRole="student">
+            <CourseDetail />
           </ProtectedRoute>
         }
       />

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Users, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getMyGroups, createGroup, addGroupMember, removeGroupMember } from '../../api/groups';
+import { getEnrolledCourses } from '../../api/courses';
 import { useAuth } from '../../context/AuthContext';
 import Skeleton from '../../components/Skeleton';
 import EmptyState from '../../components/EmptyState';
@@ -11,11 +12,13 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 function MyGroups() {
   const { user } = useAuth();
   const [groups, setGroups] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [newGroupName, setNewGroupName] = useState('');
+  const [selectedCourseId, setSelectedCourseId] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [removeTarget, setRemoveTarget] = useState(null); // { groupId, userId, name }
+  const [removeTarget, setRemoveTarget] = useState(null);
 
   const fetchGroups = async () => {
     try {
@@ -28,17 +31,31 @@ function MyGroups() {
     }
   };
 
+  const fetchCourses = async () => {
+    try {
+      const res = await getEnrolledCourses();
+      setCourses(res.data.courses);
+    } catch {
+      toast.error('Failed to load courses');
+    }
+  };
+
   useEffect(() => {
     fetchGroups();
+    fetchCourses();
   }, []);
 
   const handleCreateGroup = async (e) => {
     e.preventDefault();
-    if (!newGroupName.trim()) return;
+    if (!newGroupName.trim() || !selectedCourseId) {
+      toast.error('Pick a course and enter a group name');
+      return;
+    }
     try {
-      await createGroup(newGroupName);
+      await createGroup(newGroupName, selectedCourseId);
       toast.success('Group created');
       setNewGroupName('');
+      setSelectedCourseId('');
       fetchGroups();
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to create group');
@@ -94,23 +111,41 @@ function MyGroups() {
         <h1 className="font-display text-3xl text-ink-text">My Groups</h1>
       </div>
 
-      <form onSubmit={handleCreateGroup} className="flex gap-2">
-        <input
-          type="text"
-          value={newGroupName}
-          onChange={(e) => setNewGroupName(e.target.value)}
-          placeholder="New group name"
-          className="flex-1 px-4 py-2.5 rounded-lg bg-surface text-ink-text border border-line focus:outline-none focus:border-gold transition"
-        />
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          type="submit"
-          className="bg-gold hover:bg-gold-soft text-ink px-5 py-2.5 rounded-lg text-sm font-semibold transition"
-        >
-          Create
-        </motion.button>
-      </form>
+      {courses.length === 0 ? (
+        <div className="bg-surface border border-line rounded-xl p-5 text-muted text-sm">
+          You're not enrolled in any course yet — ask your professor to enroll you before creating a group.
+        </div>
+      ) : (
+        <form onSubmit={handleCreateGroup} className="flex flex-col sm:flex-row gap-2">
+          <select
+            value={selectedCourseId}
+            onChange={(e) => setSelectedCourseId(e.target.value)}
+            className="px-4 py-2.5 rounded-lg bg-surface text-ink-text border border-line focus:outline-none focus:border-gold transition"
+          >
+            <option value="">Select course...</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            placeholder="New group name"
+            className="flex-1 px-4 py-2.5 rounded-lg bg-surface text-ink-text border border-line focus:outline-none focus:border-gold transition"
+          />
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            type="submit"
+            className="bg-gold hover:bg-gold-soft text-ink px-5 py-2.5 rounded-lg text-sm font-semibold transition"
+          >
+            Create
+          </motion.button>
+        </form>
+      )}
 
       {groups.length === 0 ? (
         <EmptyState
@@ -138,6 +173,9 @@ function MyGroups() {
                         className="inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-1 rounded-full border border-line text-muted"
                       >
                         {m.name}
+                        {m.id === group.leader?.id && (
+                          <span className="text-gold">★</span>
+                        )}
                         {m.id !== user?.id && (
                           <button
                             onClick={() =>

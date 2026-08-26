@@ -13,7 +13,11 @@ const Submission = sequelize.define('Submission', {
   },
   groupId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true, // null for individual submissions
+  },
+  studentId: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // null for group submissions
   },
   status: {
     type: DataTypes.ENUM('pending', 'step1_confirmed', 'confirmed'),
