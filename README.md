@@ -1,18 +1,34 @@
-# Joineazy — Student, Group & Assignment Management System
+# Joineazy — Student, Group & Assignment Management System (Round 2)
 
-A role-based full-stack web application where students self-organize into groups and confirm assignment submissions, while professors post assignments and track completion in real time.
+An enhanced, course-based full-stack platform where professors manage courses and assignments while students self-organize into groups, submit work, and track progress — with role-based dashboards, group-leader-only acknowledgment, and live analytics.
 
-Built for the Joineazy Full Stack Intern technical task.
+Built for the Joineazy Full Stack Intern technical assessment, Task 2.
 
 ---
 
 ## Overview
 
-Joineazy replaces manual spreadsheet tracking for group assignments. Students create their own groups, add teammates by email, and confirm submissions through a deliberate two-step flow ("Yes, I have submitted" → final confirm) to avoid accidental mark-offs. Professors post assignments — targeted at all groups or specific ones — and get a live dashboard showing group-wise and student-wise submission status, plus completion analytics.
+This round rebuilds the platform around a **Courses** structure: professors create courses, enroll students, and post assignments scoped to a course. Students see their enrolled courses as a clickable grid, and within each course, they form groups (for group assignments) or submit individually. Every submission goes through a deliberate two-step confirmation ("Yes, I have submitted" → final confirm), and for group assignments, **only the group leader can acknowledge submission** — with that acknowledgment reflected instantly across all group members.
 
 **Roles:**
-- **Student** — creates/joins groups, views assignments, confirms submissions
-- **Admin (Professor)** — creates/edits/deletes assignments, tracks group and student-level progress, views analytics
+- **Student** — enrolls (via professor), joins/creates groups within a course, views assignments, confirms submissions (as leader or individually, depending on assignment type)
+- **Professor (Admin)** — creates courses, enrolls students, creates/edits/deletes assignments (targeted at all or specific groups, individual or group submission type), monitors and filters submissions by status, views course-scoped analytics
+
+---
+
+## UI/UX Design Choices
+
+The interface uses a **"ledger / academic registry"** aesthetic — the idea being that a system for tracking coursework should feel like a well-kept gradebook, not a generic SaaS dashboard.
+
+- **Typography**: a serif display face (Fraunces) for headings paired with a clean sans (Inter) for body text and a monospace face (IBM Plex Mono) for metadata (dates, counts, status labels). The serif/mono contrast echoes the feel of a printed academic record while staying legible on screen.
+- **Color**: a deep ink-navy base (dark mode) or warm paper cream (light mode), with a warm gold accent standing in for "official" marks — confirmations, active states, primary actions. Status is color-coded consistently everywhere: muted grey (not submitted), amber (awaiting confirmation), mint green (confirmed) — so a user never has to read text to understand where something stands.
+- **Status "stamps"**: submission status is shown as a small pill with a colored dot, styled like a registrar's stamp rather than a generic badge — reinforcing the "official record" feel and keeping status glanceable across long lists.
+- **Course accent colors**: each course card gets a deterministic accent color (derived from its ID) as a thin top bar and icon badge — gives the course list visual rhythm without requiring the professor to pick colors manually.
+- **Progress bars + checkmark burst**: each assignment card shows a two-stage progress bar (0% → 50% at step 1 → 100% on final confirm) plus a brief full-screen checkmark animation on final confirmation, giving the "acknowledgment" action a satisfying, unambiguous payoff — important since a silent action here could leave a student unsure whether their group's confirmation actually registered.
+- **Sidebar + top bar layout**: a persistent sidebar (collapsing to a slide-out drawer on mobile) keeps navigation consistent across both roles, while a top bar houses the theme toggle and an avatar/account menu — kept separate from navigation so account actions (sign out) are never confused with page navigation.
+- **Toasts over inline banners**: all success/error feedback uses toast notifications rather than inline alert boxes, so feedback doesn't shift page layout or get lost when a form is small.
+- **Light/dark mode**: designed as two materials rather than a simple color inversion — dark mode reads as a digital terminal, light mode as paper — with the same accent language (gold/mint/amber) recalibrated for contrast in each.
+- **Empty and loading states**: every list (courses, groups, assignments, analytics) has a purpose-built empty state (icon + explanation, not just blank space) and a skeleton loader shaped like the real content, rather than a generic spinner or "Loading..." text.
 
 ---
 
@@ -20,181 +36,177 @@ Joineazy replaces manual spreadsheet tracking for group assignments. Students cr
 
 | Layer | Technology |
 |---|---|
-| Frontend | React (Vite), Tailwind CSS v4, Framer Motion, Recharts |
+| Frontend | React (Vite), Tailwind CSS v4, Framer Motion, Recharts, lucide-react |
 | Backend | Node.js, Express |
-| Database | PostgreSQL, Sequelize ORM |
+| Database | PostgreSQL (Neon), Sequelize ORM |
 | Auth | JWT (role-based: student / admin) |
-| Containerization | Docker, Docker Compose |
-
----
-
-## Project Structure
-
-    joineazy-task/
-    ├── backend/
-    │   ├── src/
-    │   │   ├── config/         # Sequelize DB connection
-    │   │   ├── middleware/     # JWT auth + role authorization
-    │   │   ├── models/         # Sequelize models + associations
-    │   │   ├── routes/         # Express route handlers
-    │   │   └── server.js
-    │   ├── Dockerfile
-    │   └── package.json
-    ├── frontend/
-    │   ├── src/
-    │   │   ├── api/            # Axios API client + endpoint wrappers
-    │   │   ├── components/     # Shared UI (Layout, StatusStamp, etc.)
-    │   │   ├── context/        # Auth + Theme context providers
-    │   │   ├── pages/          # Route-level pages (student/, admin/)
-    │   │   └── routes/         # React Router config
-    │   ├── Dockerfile
-    │   └── package.json
-    ├── docker-compose.yml
-    └── README.md
+| Containerization | Docker, Docker Compose (for local development parity) |
 
 ---
 
 ## Setup & Run Instructions
 
-### Option A — Run with Docker (recommended)
+### Backend
 
-Requires Docker Desktop installed and running.
-
-    git clone https://github.com/Zishan108/student-teacher-dashboard.git 
-    cd joineazy-task
-    docker compose up --build
-
-This starts three containers: PostgreSQL (`db`), the Express API (`backend`, port 5000), and the React frontend served statically (`frontend`, port 3000).
-
-Once running, open **http://localhost:3000**.
-
-### Option B — Run manually (without Docker)
-
-**Backend:**
-
-    cd backend
-    npm install
+```bash
+cd backend
+npm install
+```
 
 Create a `.env` file in `backend/`:
 
-    PORT=5000
-    DB_HOST=localhost
-    DB_PORT=5432
-    DB_NAME=joineazy
-    DB_USER=postgres
-    DB_PASSWORD=postgres
-    JWT_SECRET=your_long_random_secret
+```
+PORT=5000
+DATABASE_URL=postgresql://<user>:<password>@<host>/<dbname>?sslmode=require
+JWT_SECRET=your_long_random_secret
+```
 
-Start a local Postgres instance (via Docker is easiest):
-
-    docker run --name joineazy-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=joineazy -p 5432:5432 -d postgres:16
+`DATABASE_URL` should point at a PostgreSQL instance — a free [Neon](https://neon.tech) database works well and requires no local Postgres install.
 
 Run the backend:
 
-    npm run dev
+```bash
+npm run dev
+```
 
-**Frontend** (new terminal):
+You should see `DB connected` and `Server running on port 5000`.
 
-    cd frontend
-    npm install
-    npm run dev
+### Frontend
+
+In a new terminal:
+
+```bash
+cd frontend
+npm install
+```
+
+Create a `.env` file in `frontend/`:
+
+```
+VITE_API_URL=http://localhost:5000
+```
+
+Run the frontend:
+
+```bash
+npm run dev
+```
 
 Open **http://localhost:5173**.
 
----
+### Optional: Docker (local dev parity)
 
-## Database Schema & Relationships
+```bash
+docker compose up --build
+```
 
-**Tables:** `users`, `groups`, `group_members`, `assignments`, `assignment_groups`, `submissions`
-
-- A **User** (`role`: student/admin) can create many **Groups**, and belongs to many **Groups** through **GroupMembers** (many-to-many).
-- A **User** (admin) creates many **Assignments**.
-- An **Assignment** can target specific **Groups** via **AssignmentGroups** (many-to-many), or all groups.
-- A **Submission** links one **Assignment** to one **Group**, tracks `status` (`pending` → `step1_confirmed` → `confirmed`), and records which **User** (`confirmedBy`) completed the confirmation.
-
-**ER Diagram (textual):**
-
-    ┌─────────┐       ┌──────────────┐       ┌─────────┐
-    │  users  │──1:N──│ group_members│──N:1──│ groups  │
-    └─────────┘       └──────────────┘       └─────────┘
-         │                                        │
-         │ 1:N (createdBy)                        │ N:M
-         ▼                                        ▼
-    ┌─────────────┐   ┌───────────────────┐  ┌──────────────┐
-    │ assignments │──<│ assignment_groups │>─│    groups    │
-    └─────────────┘   └───────────────────┘  └──────────────┘
-         │                                        │
-         └──────────────< submissions >───────────┘
-                      (assignmentId, groupId,
-                       status, confirmedBy)
+Starts backend and frontend as containers; point the backend's `DATABASE_URL` environment variable at your Neon connection string in `docker-compose.yml` before running.
 
 ---
 
-## Architecture Overview
+## Screenshots / UI Flow
 
-- **Frontend (React + Vite)** — talks to the backend exclusively via a REST API, using an Axios instance that auto-attaches the JWT from `localStorage` to every request. Role-based routing (`ProtectedRoute`) restricts `/student` and `/admin` dashboards by decoded JWT role.
-- **Backend (Express)** — stateless REST API. JWT middleware (`authenticate`) verifies tokens; `authorize(role)` middleware gates admin-only routes. Sequelize handles all DB access and model associations.
-- **Database (PostgreSQL)** — normalized relational schema; Sequelize's `sync({ alter: true })` keeps tables in sync with models during development.
-- **Flow:** Browser → React (port 3000/5173) → Express API (port 5000) → PostgreSQL (port 5432). In Docker, all three run as separate containers on a shared bridge network, referencing each other by service name (`db`, `backend`).
+> Add your screenshots or GIFs below — save image files into a `/screenshots` folder at the project root and update the paths accordingly.
 
----
+### Login / Registration
+`![Login screen](./screenshots/login.png)`
 
-## API Endpoints
+### Student Dashboard — Course Grid
+`![Student course grid](./screenshots/student-courses.png)`
 
-### Auth
+### Course Detail — Assignment View
+`![Course detail with progress bars](./screenshots/course-detail.png)`
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/auth/register` | Register (student or admin) |
-| POST | `/auth/login` | Login, returns JWT |
+### Two-Step Confirmation + Checkmark Animation
+`![Confirmation flow](./screenshots/confirm-flow.gif)`
 
-### Groups
+### Professor Dashboard — Courses
+`![Professor courses tab](./screenshots/admin-courses.png)`
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/groups` | Create a group |
-| POST | `/groups/:id/members` | Add member by email |
-| DELETE | `/groups/:id/members/:userId` | Remove a member |
-| GET | `/groups/:id` | Get a group + members |
-| GET | `/groups` | Get logged-in user's groups |
-| GET | `/groups/all` | Get all groups (admin only) |
+### Professor — Create Assignment
+`![Create assignment form](./screenshots/create-assignment.png)`
 
-### Assignments
+### Professor — Submissions with Status Filter
+`![Submissions filter](./screenshots/submissions-filter.png)`
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/assignments` | Create assignment (admin only) |
-| PATCH | `/assignments/:id` | Edit assignment (admin only) |
-| DELETE | `/assignments/:id` | Delete assignment (admin only) |
-| GET | `/assignments` | List all assignments |
-| GET | `/assignments/:id` | Get one assignment |
-
-### Submissions
-
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/submissions/:id/step1` | Step 1: "Yes, I have submitted" |
-| POST | `/submissions/:id/confirm` | Step 2: final confirmation |
-| GET | `/submissions/group/:groupId` | Submissions for a group |
-| GET | `/submissions/assignment/:assignmentId` | Submissions for an assignment (admin) |
-| GET | `/submissions/analytics` | Completion analytics (admin only) |
-
-All endpoints except `/auth/*` require `Authorization: Bearer <token>`.
+### Analytics — Course-Scoped
+`![Analytics dashboard](./screenshots/analytics.png)`
 
 ---
 
-## Key Design Decisions
+## Component Architecture
 
-- **Two-step submission confirmation** is enforced at the database level via a `status` enum (`pending` → `step1_confirmed` → `confirmed`), not just in the UI — the API rejects a step-2 confirmation if step 1 hasn't happened first.
-- **Submissions are pre-created** when an assignment is made, one row per targeted group, so progress can be tracked from "not started" rather than only appearing once a student acts.
-- **Role authorization** is enforced server-side via Express middleware (`authorize('admin')`), not just hidden in the UI — student tokens are rejected with 403 on admin-only routes even if called directly.
-- **JWT stored in `localStorage`** with the role embedded in the payload, decoded client-side for route protection (`ProtectedRoute`) and re-verified server-side on every request.
-- **Dockerized as three services** (db, backend, frontend) with a Postgres healthcheck gating backend startup, avoiding the common "backend crashes before DB is ready" race condition.
+```
+frontend/src/
+├── api/                      # Axios wrappers, one file per resource
+│   ├── axios.js               # Configured instance, auto-attaches JWT
+│   ├── auth.js
+│   ├── courses.js
+│   ├── groups.js
+│   ├── assignments.js
+│   └── submissions.js
+├── components/                # Shared, reusable UI
+│   ├── Layout.jsx               # Sidebar + top bar shell used by every dashboard page
+│   ├── UserMenu.jsx             # Avatar dropdown (name, email, role, sign out)
+│   ├── ThemeToggle.jsx
+│   ├── StatusStamp.jsx          # Colored status pill, animates on change
+│   ├── ConfirmCheckmark.jsx     # Full-screen checkmark burst on final confirmation
+│   ├── ConfirmDialog.jsx        # Reusable "are you sure?" modal
+│   ├── Skeleton.jsx             # Loading placeholder primitive
+│   ├── EmptyState.jsx           # Icon + message for empty lists
+│   └── AmbientBackground.jsx    # Animated background blobs (landing/auth pages)
+├── context/
+│   ├── AuthContext.jsx          # Logged-in user + token, persisted to localStorage
+│   └── ThemeContext.jsx         # Dark/light mode, persisted to localStorage
+├── lib/
+│   └── courseColors.js          # Deterministic accent color per course ID
+├── pages/
+│   ├── Home.jsx, Login.jsx, Register.jsx
+│   ├── student/
+│   │   ├── StudentDashboard.jsx  # Tab shell: Courses / Groups
+│   │   ├── CourseGrid.jsx        # Enrolled courses as clickable cards
+│   │   ├── CourseDetail.jsx      # Assignments for one course, confirm flow
+│   │   └── MyGroups.jsx          # Create/manage groups, leader indicator
+│   └── admin/
+│       ├── AdminDashboard.jsx    # Tab shell: Courses / Create Assignment / Assignments / Analytics
+│       ├── CreateCourse.jsx      # Create courses, enroll students
+│       ├── CreateAssignment.jsx  # Course + submission-type-aware assignment form
+│       ├── Assignments.jsx       # Edit/delete assignments, filterable submissions view
+│       └── Analytics.jsx         # Course-scoped completion chart + progress bars
+└── routes/
+    └── AppRoutes.jsx             # React Router config, role-protected routes
+```
+
+**Data flow**: every page component owns its own data-fetching (via the `api/` wrappers) and local UI state; `AuthContext` and `ThemeContext` are the only cross-cutting state, kept deliberately minimal. `Layout` is shared across every authenticated page so navigation and account controls stay consistent regardless of which dashboard tab is active.
+
+---
+
+## Backend Architecture
+
+```
+backend/src/
+├── config/db.js         # Sequelize connection (Neon, SSL)
+├── middleware/auth.js    # JWT verification + role-based authorization
+├── models/               # Sequelize models + associations
+│   ├── User.js, Course.js, CourseEnrollment.js
+│   ├── Group.js (includes leaderId), GroupMember.js
+│   ├── Assignment.js (submissionType, courseId), AssignmentGroup.js
+│   └── Submission.js (supports both groupId and studentId)
+├── routes/
+│   ├── auth.js, courses.js, groups.js, assignments.js, submissions.js
+└── server.js
+```
+
+**Key backend design decisions:**
+- **Group-leader enforcement lives server-side**, not just in the UI — the `/submissions/:id/step1` and `/submissions/:id/confirm` routes check `group.leaderId === req.user.id` before allowing a group-type submission to change status, so the acknowledgment restriction can't be bypassed by calling the API directly.
+- **Leadership auto-transfers** if the current leader removes themselves from a group, so a group is never left in a state where no member can confirm submissions.
+- **Submissions support two shapes** in one table: a `groupId`-only row (group assignment, one row per group) or a `studentId`-only row (individual assignment, one row per student) — avoiding a second parallel table while keeping the confirmation logic in one place.
+- **Status filtering** is done client-side against the full submissions payload for an assignment, since the dataset per assignment is small (bounded by course roster size) — kept the API simple rather than adding query-param filtering for a dataset this size.
 
 ---
 
 ## Deployment
 
-- **Frontend:** [add deployed URL here]
-- **Backend:** [add deployed URL here]
+- **Backend:** Render — [add your Render URL here]
+- **Frontend:** Render — [add your Render URL here]
 - **Demo video:** [add link here]

@@ -46,7 +46,10 @@ router.get('/taught', authenticate, authorize('admin'), async (req, res) => {
   try {
     const courses = await Course.findAll({
       where: { professorId: req.user.id },
-      include: [{ model: User, as: 'students', attributes: ['id', 'name', 'email'] }],
+      include: [
+        { model: User, as: 'students', attributes: ['id', 'name', 'email'] },
+        { model: Assignment, as: 'assignments', attributes: ['id'] },
+      ],
     });
     res.json({ courses });
   } catch (err) {
@@ -92,6 +95,44 @@ router.get('/:id', authenticate, async (req, res) => {
     });
     if (!course) return res.status(404).json({ error: 'Course not found' });
     res.json({ course });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+
+// Analytics for a specific course (professor only) — completion rate per assignment in this course
+router.get('/:id/analytics', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const course = await Course.findByPk(req.params.id, {
+      include: [
+        {
+          model: Assignment,
+          as: 'assignments',
+          include: [{ model: require('../models').Submission, as: 'submissions' }],
+        },
+      ],
+    });
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+
+    const analytics = course.assignments.map((a) => {
+      const total = a.submissions.length;
+      const confirmed = a.submissions.filter((s) => s.status === 'confirmed').length;
+      const pending = total - confirmed;
+      return {
+        assignmentId: a.id,
+        title: a.title,
+        submissionType: a.submissionType,
+        totalTracked: total,
+        confirmed,
+        pending,
+        completionRate: total > 0 ? Math.round((confirmed / total) * 100) : 0,
+      };
+    });
+
+    const studentCount = await course.countStudents();
+
+    res.json({ course: { id: course.id, name: course.name }, studentCount, analytics });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Something went wrong' });

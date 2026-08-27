@@ -69,12 +69,13 @@ router.patch('/:id', authenticate, authorize('admin'), async (req, res) => {
     const assignment = await Assignment.findByPk(req.params.id);
     if (!assignment) return res.status(404).json({ error: 'Assignment not found' });
 
-    const { title, description, dueDate, onedriveLink } = req.body;
+    const { title, description, dueDate, onedriveLink, courseId } = req.body;
     await assignment.update({
       title: title ?? assignment.title,
       description: description ?? assignment.description,
       dueDate: dueDate ?? assignment.dueDate,
       onedriveLink: onedriveLink ?? assignment.onedriveLink,
+      courseId: courseId === '' ? null : (courseId ?? assignment.courseId),
     });
 
     res.json({ assignment });

@@ -116,6 +116,10 @@ router.get('/', authenticate, async (req, res) => {
 router.delete('/:id/members/:userId', authenticate, async (req, res) => {
   try {
     const { id: groupId, userId } = req.params;
+    const targetUserId = Number(userId);
+
+    const group = await Group.findByPk(groupId);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
 
     const requesterMembership = await GroupMember.findOne({
       where: { groupId, userId: req.user.id },
@@ -124,12 +128,34 @@ router.delete('/:id/members/:userId', authenticate, async (req, res) => {
       return res.status(403).json({ error: 'You are not a member of this group' });
     }
 
-    const targetMembership = await GroupMember.findOne({ where: { groupId, userId } });
+    const isSelfRemoval = req.user.id === targetUserId;
+    const isLeader = group.leaderId === req.user.id;
+
+    // Only the leader can remove someone else. Anyone can remove themselves (leave).
+    if (!isSelfRemoval && !isLeader) {
+      return res.status(403).json({ error: 'Only the group leader can remove other members' });
+    }
+
+    const targetMembership = await GroupMember.findOne({ where: { groupId, userId: targetUserId } });
     if (!targetMembership) {
       return res.status(404).json({ error: 'Member not found in this group' });
     }
 
     await targetMembership.destroy();
+
+    // If the leader was just removed, auto-promote the earliest-remaining member.
+    if (group.leaderId === targetUserId) {
+      const remaining = await GroupMember.findOne({
+        where: { groupId },
+        order: [['createdAt', 'ASC']],
+      });
+      if (remaining) {
+        await group.update({ leaderId: remaining.userId });
+      }
+      // If no members remain, leaderId is left pointing at someone no longer in
+      // the group — harmless since there's nobody to act on submissions anyway.
+    }
+
     res.json({ message: 'Member removed successfully' });
   } catch (err) {
     console.error(err);

@@ -6,3 +6,4 @@ export const getTaughtCourses = () => api.get('/courses/taught');
 export const getEnrolledCourses = () => api.get('/courses/enrolled');
 export const getAllCourses = () => api.get('/courses/all');
 export const getCourse = (id) => api.get(`/courses/${id}`);
+export const getCourseAnalytics = (courseId) => api.get(`/courses/${courseId}/analytics`);

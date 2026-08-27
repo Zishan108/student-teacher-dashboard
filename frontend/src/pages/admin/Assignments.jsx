@@ -8,6 +8,7 @@ import StatusStamp from '../../components/StatusStamp';
 import Skeleton from '../../components/Skeleton';
 import EmptyState from '../../components/EmptyState';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import { getTaughtCourses } from '../../api/courses';
 
 function Assignments() {
   const [assignments, setAssignments] = useState([]);
@@ -15,8 +16,10 @@ function Assignments() {
   const [expandedId, setExpandedId] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ title: '', description: '', dueDate: '', onedriveLink: '' });
+  const [editForm, setEditForm] = useState({ title: '', description: '', dueDate: '', onedriveLink: '', courseId: '' });
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [courses, setCourses] = useState([]);
 
   const fetchAssignments = async () => {
     try {
@@ -31,6 +34,7 @@ function Assignments() {
 
   useEffect(() => {
     fetchAssignments();
+    getTaughtCourses().then((res) => setCourses(res.data.courses));
   }, []);
 
   const toggleExpand = async (id) => {
@@ -45,15 +49,16 @@ function Assignments() {
   };
 
   const startEdit = (a) => {
-    setEditingId(a.id);
-    setExpandedId(null);
-    setEditForm({
-      title: a.title,
-      description: a.description || '',
-      dueDate: a.dueDate ? a.dueDate.slice(0, 10) : '',
-      onedriveLink: a.onedriveLink,
-    });
-  };
+  setEditingId(a.id);
+  setExpandedId(null);
+  setEditForm({
+    title: a.title,
+    description: a.description || '',
+    dueDate: a.dueDate ? a.dueDate.slice(0, 10) : '',
+    onedriveLink: a.onedriveLink,
+    courseId: a.courseId || '',
+  });
+};
 
   const handleEditSubmit = async (e, id) => {
     e.preventDefault();
@@ -192,6 +197,18 @@ function Assignments() {
                       placeholder="OneDrive link"
                       required
                     />
+                    <select
+                      className={inputClass}
+                      value={editForm.courseId}
+                      onChange={(e) => setEditForm({ ...editForm, courseId: e.target.value })}
+                    >
+                      <option value="">No course</option>
+                      {courses.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
                     <div className="flex gap-2">
                       <button
                         type="submit"
@@ -212,42 +229,67 @@ function Assignments() {
               </AnimatePresence>
 
               <AnimatePresence>
-                {expandedId === a.id && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-4 pt-4 border-t border-line space-y-3 overflow-hidden"
+  {expandedId === a.id && (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      className="mt-4 pt-4 border-t border-line space-y-3 overflow-hidden"
+    >
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-muted text-xs font-mono uppercase tracking-wider mr-1">Filter:</span>
+        {['all', 'pending', 'step1_confirmed', 'confirmed'].map((f) => (
+          <button
+            key={f}
+            onClick={() => setStatusFilter(f)}
+            className={`text-[11px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full border transition ${
+              statusFilter === f
+                ? 'border-gold text-gold bg-gold/10'
+                : 'border-line text-muted hover:text-ink-text'
+            }`}
+          >
+            {f === 'all' ? 'All' : f === 'step1_confirmed' ? 'Awaiting confirm' : f === 'pending' ? 'Not submitted' : 'Confirmed'}
+          </button>
+        ))}
+      </div>
+
+      {(() => {
+        const filtered =
+          statusFilter === 'all' ? submissions : submissions.filter((s) => s.status === statusFilter);
+
+        if (filtered.length === 0) {
+          return <p className="text-muted text-sm">No submissions match this filter.</p>;
+        }
+
+        return filtered.map((s) => (
+          <div key={s.id} className="bg-surface-high rounded-lg p-3">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-ink-text text-sm font-medium">{s.Group?.name || s.student?.name}</span>
+              <StatusStamp status={s.status} />
+            </div>
+            {s.Group?.members && (
+              <div className="flex flex-wrap gap-1.5">
+                {s.Group.members.map((m) => (
+                  <span
+                    key={m.id}
+                    className={`text-[11px] font-mono px-2 py-0.5 rounded-full border ${
+                      s.confirmer?.id === m.id
+                        ? 'border-mint/40 text-mint bg-mint/10'
+                        : 'border-line text-muted'
+                    }`}
                   >
-                    {submissions.length === 0 && (
-                      <p className="text-muted text-sm">No groups tracked for this assignment.</p>
-                    )}
-                    {submissions.map((s) => (
-                      <div key={s.id} className="bg-surface-high rounded-lg p-3">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-ink-text text-sm font-medium">{s.Group?.name}</span>
-                          <StatusStamp status={s.status} />
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {s.Group?.members?.map((m) => (
-                            <span
-                              key={m.id}
-                              className={`text-[11px] font-mono px-2 py-0.5 rounded-full border ${
-                                s.confirmer?.id === m.id
-                                  ? 'border-mint/40 text-mint bg-mint/10'
-                                  : 'border-line text-muted'
-                              }`}
-                            >
-                              {m.name}
-                              {s.confirmer?.id === m.id && ' ✓ confirmed'}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    {m.name}
+                    {s.confirmer?.id === m.id && ' ✓ confirmed'}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ));
+      })()}
+    </motion.div>
+  )}
+</AnimatePresence>
             </div>
           ))}
         </div>

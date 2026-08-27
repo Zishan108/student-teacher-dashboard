@@ -8,12 +8,14 @@ import { getGroupSubmissions, confirmStep1, confirmStep2 } from '../../api/submi
 import StatusStamp from '../../components/StatusStamp';
 import Skeleton from '../../components/Skeleton';
 import EmptyState from '../../components/EmptyState';
+import ConfirmCheckmark from '../../components/ConfirmCheckmark';
 
 function Assignments() {
   const [assignments, setAssignments] = useState([]);
   const [groups, setGroups] = useState([]);
   const [submissionsByGroup, setSubmissionsByGroup] = useState({});
   const [loading, setLoading] = useState(true);
+  const [showCheckmark, setShowCheckmark] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -58,6 +60,8 @@ function Assignments() {
   const handleStep2 = async (submissionId) => {
     try {
       await confirmStep2(submissionId);
+      setShowCheckmark(true);
+      setTimeout(() => setShowCheckmark(false), 1000);
       toast.success('Submission confirmed');
       fetchData();
     } catch (err) {
@@ -98,6 +102,8 @@ function Assignments() {
 
   return (
     <div className="space-y-8">
+      <ConfirmCheckmark show={showCheckmark} />
+
       <div>
         <p className="font-mono text-[11px] text-muted uppercase tracking-widest mb-1">Registry</p>
         <h1 className="font-display text-3xl text-ink-text">Assignments</h1>
@@ -144,7 +150,7 @@ function Assignments() {
 
                   <div className="flex items-center gap-3 pt-3 border-t border-line flex-wrap">
                     
-                    <a  href={assignment.onedriveLink}
+                    <a href={assignment.onedriveLink}
                       target="_blank"
                       rel="noreferrer"
                       className="text-gold text-sm hover:text-gold-soft hover:underline"

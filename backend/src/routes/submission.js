@@ -101,6 +101,7 @@ router.get('/assignment/:assignmentId', authenticate, authorize('admin'), async 
           include: [{ model: User, as: 'members', attributes: ['id', 'name', 'email'] }],
         },
         { model: User, as: 'confirmer', attributes: ['id', 'name', 'email'] },
+        { model: User, as: 'student', attributes: ['id', 'name', 'email'] },
       ],
     });
     res.json({ submissions });
