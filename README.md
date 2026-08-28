@@ -106,31 +106,32 @@ Starts backend and frontend as containers; point the backend's `DATABASE_URL` en
 
 ## Screenshots / UI Flow
 
-> Add your screenshots or GIFs below — save image files into a `/screenshots` folder at the project root and update the paths accordingly.
+### Login / 
+![Login screen](./screenshots/login.png)
 
-### Login / Registration
-`![Login screen](./screenshots/login.png)`
+### Registration /
+![Login screen](./screenshots/registeration.png)
 
 ### Student Dashboard — Course Grid
-`![Student course grid](./screenshots/student-courses.png)`
+![Student course grid](./screenshots/student-courses.png)
 
 ### Course Detail — Assignment View
-`![Course detail with progress bars](./screenshots/course-detail.png)`
+![Course detail with progress bars](./screenshots/course-detail.png)
 
 ### Two-Step Confirmation + Checkmark Animation
-`![Confirmation flow](./screenshots/confirm-flow.gif)`
+![Confirmation flow](./screenshots/confirm-flow.gif)
 
 ### Professor Dashboard — Courses
-`![Professor courses tab](./screenshots/admin-courses.png)`
+![Professor courses tab](./screenshots/admin-courses.png)
 
 ### Professor — Create Assignment
-`![Create assignment form](./screenshots/create-assignment.png)`
+![Create assignment form](./screenshots/create-assignment.png)
 
 ### Professor — Submissions with Status Filter
-`![Submissions filter](./screenshots/submissions-filter.png)`
+![Submissions filter](./screenshots/submissions-filter.png)
 
 ### Analytics — Course-Scoped
-`![Analytics dashboard](./screenshots/analytics.png)`
+![Analytics dashboard](./screenshots/analytics.png)
 
 ---
 
@@ -207,6 +208,6 @@ backend/src/
 
 ## Deployment
 
-- **Backend:** Render — [add your Render URL here]
-- **Frontend:** Render — [add your Render URL here]
-- **Demo video:** [add link here]
+- **Backend:** Render — https://student-teacher-dashboard-i97z.onrender.com/health
+- **Frontend:** Render — https://student-teacher-dashboard-1.onrender.com/
+- **Demo video:** https://drive.google.com/file/d/1EEp7tmUSUqtG389vdPxJRPyy800R5YHZ/view?usp=drive_link
